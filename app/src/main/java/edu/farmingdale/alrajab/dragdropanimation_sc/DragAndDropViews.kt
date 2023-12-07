@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipDescription
 import android.graphics.Canvas
 import android.graphics.Point
+import android.graphics.drawable.AnimationDrawable
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -15,23 +16,39 @@ import android.widget.ImageView
 import edu.farmingdale.alrajab.dragdropanimation_sc.databinding.ActivityDragAndDropViewsBinding
 
 class DragAndDropViews : AppCompatActivity() {
+
     lateinit var binding: ActivityDragAndDropViewsBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityDragAndDropViewsBinding.inflate(layoutInflater)
-
         setContentView(binding.root)
+        //binding for holders
         binding.holder01.setOnDragListener(arrowDragListener)
         binding.holder02.setOnDragListener(arrowDragListener)
+        binding.holder03.setOnDragListener(arrowDragListener)
+        binding.holder04.setOnDragListener(arrowDragListener)
+        binding.holder05.setOnDragListener(arrowDragListener)
 
-
+        //binding for buttons
         binding.upMoveBtn.setOnLongClickListener(onLongClickListener)
+        binding.downMoveBtn.setOnLongClickListener(onLongClickListener)
+        binding.forwardMoveBtn.setOnLongClickListener(onLongClickListener)
+        binding.backMoveBtn.setOnLongClickListener(onLongClickListener)
 
-
-
+        //Animation setup
+        val rocketAnimationView: ImageView = findViewById(R.id.rocketAnimationView)
+        val rocketAnimation = rocketAnimationView.background as AnimationDrawable
+        binding.bnRocket.setOnClickListener {
+            if (rocketAnimation.isRunning) {
+                rocketAnimation.stop()
+                rocketAnimationView.visibility = View.INVISIBLE
+            } else {
+                rocketAnimationView.visibility = View.VISIBLE
+                rocketAnimation.start()
+            }
+        }
     }
-
-
 
     private val onLongClickListener = View.OnLongClickListener { view: View ->
         (view as? Button)?.let {
@@ -47,14 +64,10 @@ class DragAndDropViews : AppCompatActivity() {
             } else {
                 it.startDrag(dragData, myShadow, null, 0)
             }
-
             true
         }
         false
     }
-
-
-
 
     private val arrowDragListener = View.OnDragListener { view, dragEvent ->
         (view as? ImageView)?.let {
@@ -63,24 +76,33 @@ class DragAndDropViews : AppCompatActivity() {
                     return@OnDragListener true
                 }
                 DragEvent.ACTION_DRAG_ENTERED -> {
+                    //Turn border to yellow upon highlight
+                    it.setBackgroundResource(R.drawable.yellowborder)
                     return@OnDragListener true
                 }
                 DragEvent.ACTION_DRAG_EXITED-> {
+                    //Turn border back to black
+                    it.setBackgroundResource(R.drawable.border)
                     return@OnDragListener true
                 }
-                // No need to handle this for our use case.
+                //No need to handle this for our use case.
                 DragEvent.ACTION_DRAG_LOCATION -> {
                     return@OnDragListener true
                 }
 
                 DragEvent.ACTION_DROP -> {
-                    // Read color data from the clip data and apply it to the card view background.
+                    //Read color data from the clip data and apply it to the card view background.
                     val item: ClipData.Item = dragEvent.clipData.getItemAt(0)
                     val lbl = item.text.toString()
-                    Log.d("BCCCCCCCCCCC", "NOTHING > >  " + lbl)
+                    Log.d("DragDropEvent", "ACTION > >  " + lbl)
                    when(lbl.toString()){
                        "UP"->view.setImageResource( R.drawable.ic_baseline_arrow_upward_24)
+                       "DOWN"->view.setImageResource( R.drawable.ic_baseline_arrow_downward_24)
+                       "FORWARD"->view.setImageResource(R.drawable.ic_baseline_arrow_forward_24)
+                       "BACK"->view.setImageResource( R.drawable.ic_baseline_arrow_back_24)
                    }
+                    //Turn border back to black
+                    it.setBackgroundResource(R.drawable.border)
                     return@OnDragListener true
                 }
                 DragEvent.ACTION_DRAG_ENDED -> {
@@ -91,7 +113,6 @@ class DragAndDropViews : AppCompatActivity() {
         }
         false
     }
-
 
     private class ArrowDragShadowBuilder(view: View) : View.DragShadowBuilder(view) {
         private val shadow = view.background

@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">DragDropAnimation_sc</string>
+    <string name="app_name">DragDropAnimation</string>
+    <string name="button_text">Click here to Start or Stop Animation</string>
 </resources>
