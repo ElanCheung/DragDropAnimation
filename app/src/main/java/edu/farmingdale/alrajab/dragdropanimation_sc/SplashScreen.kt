@@ -2,7 +2,6 @@ package edu.farmingdale.alrajab.dragdropanimation_sc
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.View
 import kotlinx.coroutines.*
 
 class SplashScreen : AppCompatActivity() {

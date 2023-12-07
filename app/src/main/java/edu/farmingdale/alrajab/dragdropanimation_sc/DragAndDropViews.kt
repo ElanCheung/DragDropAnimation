@@ -1,5 +1,6 @@
 package edu.farmingdale.alrajab.dragdropanimation_sc
 
+import android.animation.ObjectAnimator
 import android.content.ClipData
 import android.content.ClipDescription
 import android.graphics.Canvas
@@ -18,35 +19,84 @@ import edu.farmingdale.alrajab.dragdropanimation_sc.databinding.ActivityDragAndD
 class DragAndDropViews : AppCompatActivity() {
 
     lateinit var binding: ActivityDragAndDropViewsBinding
+    //Keep track of sequence
+    private var arrowSequence = mutableListOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityDragAndDropViewsBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        //binding for holders
+
+        //binding for drag listeners for the holders
         binding.holder01.setOnDragListener(arrowDragListener)
         binding.holder02.setOnDragListener(arrowDragListener)
         binding.holder03.setOnDragListener(arrowDragListener)
         binding.holder04.setOnDragListener(arrowDragListener)
         binding.holder05.setOnDragListener(arrowDragListener)
 
-        //binding for buttons
+        //binding for long-click listeners for arrow buttons
         binding.upMoveBtn.setOnLongClickListener(onLongClickListener)
         binding.downMoveBtn.setOnLongClickListener(onLongClickListener)
         binding.forwardMoveBtn.setOnLongClickListener(onLongClickListener)
         binding.backMoveBtn.setOnLongClickListener(onLongClickListener)
 
-        //Animation setup
-        val rocketAnimationView: ImageView = findViewById(R.id.rocketAnimationView)
-        val rocketAnimation = rocketAnimationView.background as AnimationDrawable
+        //setup for rocket animation
+        val rocketAnimation = binding.rocketAnimationView.background as AnimationDrawable
         binding.bnRocket.setOnClickListener {
             if (rocketAnimation.isRunning) {
                 rocketAnimation.stop()
-                rocketAnimationView.visibility = View.INVISIBLE
+                binding.rocketAnimationView.visibility = View.INVISIBLE
             } else {
-                rocketAnimationView.visibility = View.VISIBLE
+                binding.rocketAnimationView.visibility = View.VISIBLE
                 rocketAnimation.start()
             }
+            //reset the rotation of rocket to original
+            binding.rocketAnimationView.rotation = 0f
+            binding.rocketAnimationView.translationY = 0f
+        }
+
+        //play button listener for animating the rocket
+        binding.bnPlay.setOnClickListener {
+            //variable to keep track of total duration of animations
+            var totalDuration = 0L
+
+            //iterate through each arrow type in list
+            arrowSequence.forEach { arrowType ->
+                val rocketAnimationView = binding.rocketAnimationView
+                when (arrowType) {
+                    "UP", "DOWN" -> {
+                        val translationY = if (arrowType == "UP") -200f else 200f
+                        //create objectanimator for moving up or down
+                        val animation = ObjectAnimator.ofFloat(rocketAnimationView, "translationY", translationY)
+                        //delay before animation starts using total duration of previous animations
+                        animation.startDelay = totalDuration
+                        //sets animation duration to 1 second
+                        animation.duration = 1000
+                        //starts animation
+                        animation.start()
+                        //add duration of this animation to total duration of animations
+                        totalDuration += animation.duration
+                    }
+                    "FORWARD", "BACK" -> {
+                        val rotation = if (arrowType == "FORWARD") 90f else -90f
+                        //create objectanimator for rotating right or left
+                        val animation = ObjectAnimator.ofFloat(rocketAnimationView, "rotation", rotation)
+                        //delay before animation starts using total duration of previous animations
+                        animation.startDelay = totalDuration
+                        //sets animation duration to 1 second
+                        animation.duration = 1000
+                        //starts animation
+                        animation.start()
+                        //add duration of this animation to total duration of animations
+                        totalDuration += animation.duration
+                    }
+                }
+            }
+            //after all animations, reset rockets rotation and position
+            binding.rocketAnimationView.postDelayed({
+                binding.rocketAnimationView.rotation = 0f
+                binding.rocketAnimationView.translationY = 0f
+            }, totalDuration)
         }
     }
 
@@ -54,7 +104,6 @@ class DragAndDropViews : AppCompatActivity() {
         (view as? Button)?.let {
 
             val item = ClipData.Item(it.tag as? CharSequence)
-
             val dragData = ClipData( it.tag as? CharSequence,
                 arrayOf(ClipDescription.MIMETYPE_TEXT_PLAIN), item)
             val myShadow = ArrowDragShadowBuilder(it)
@@ -81,7 +130,7 @@ class DragAndDropViews : AppCompatActivity() {
                     return@OnDragListener true
                 }
                 DragEvent.ACTION_DRAG_EXITED-> {
-                    //Turn border back to black
+                    //Turn border back to black upon exiting holder
                     it.setBackgroundResource(R.drawable.border)
                     return@OnDragListener true
                 }
@@ -94,7 +143,21 @@ class DragAndDropViews : AppCompatActivity() {
                     //Read color data from the clip data and apply it to the card view background.
                     val item: ClipData.Item = dragEvent.clipData.getItemAt(0)
                     val lbl = item.text.toString()
-                    Log.d("DragDropEvent", "ACTION > >  " + lbl)
+                    Log.d("DragDropEvent", "Dropped arrow type > >  " + lbl)
+
+                    //ensures that list size is always at least 5
+                    while (arrowSequence.size < 5) {
+                        arrowSequence.add("")
+                    }
+
+                    //maintains sequence
+                    when (view.id) {
+                        R.id.holder01 -> arrowSequence[0] = lbl
+                        R.id.holder02 -> arrowSequence[1] = lbl
+                        R.id.holder03 -> arrowSequence[2] = lbl
+                        R.id.holder04 -> arrowSequence[3] = lbl
+                        R.id.holder05 -> arrowSequence[4] = lbl
+                    }
                    when(lbl.toString()){
                        "UP"->view.setImageResource( R.drawable.ic_baseline_arrow_upward_24)
                        "DOWN"->view.setImageResource( R.drawable.ic_baseline_arrow_downward_24)
